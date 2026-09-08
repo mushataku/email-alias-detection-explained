@@ -111,6 +111,7 @@
   figure { margin: 0; display: flex; flex-direction: column; gap: 10px; }
   figure svg { width: 100%; height: auto; display: block; overflow: visible; }
   figcaption { font-size: 12px; color: var(--muted); text-align: center; }
+  figcaption a { color: var(--stamp); }
 
   svg text { font-family: var(--body); fill: currentColor; }
   svg .mono { font-family: var(--mono); }
@@ -152,27 +153,78 @@
   <!-- 1 -->
   <section>
     <h2>無限のメールアドレスは、年1,600円で手に入る</h2>
-    <p>自分のドメインでメールを受けるとき、<strong>catch-all</strong>（accept-all とも呼ぶ）という設定がある。「このアドレスは受ける、あのアドレスは受けない」を1件ずつ登録する工程が存在せず、<strong>ローカル部が何であれ全部を1つの宛先へ流す</strong>ルールを1本張るだけで終わる。</p>
-    <p>だから<code>a@自分のドメイン</code>も<code>zzzzz-999@自分のドメイン</code>も同じ受信箱に届く。設定作業は<strong>10件でも100万件でも同じ1回</strong>で、費用もアドレス数に連動しない。ドメインの維持費だけで、原価販売のレジストラなら<code>.com</code>が<strong>年$10.44</strong>（登録$10.26＋ICANN手数料$0.18）——今のレートでだいたい年1,600円。更新価格は登録価格と同額で、2026年11月1日からVerisignの卸値が7%上がるため<strong>$11.15/年</strong>になる予定だが、それでも1件あたりの単価という概念自体が存在しない。</p>
-    <p>制限は確かにある。ルーティングルールは<strong>200/ドメイン</strong>、検証済み宛先は<strong>200/アカウント</strong>。だが<strong>catch-allはルールを1本しか使わない</strong>ので、この上限には最初から当たらない。</p>
-    <p class="note">ここまでは全部本当。だから話はここで終わらない。</p>
+    <figure>
+      <svg viewBox="0 0 660 210" role="img" aria-label="ローカル部が異なる複数のメールアドレスが、1本のcatch-allルールで同じ宛先に集約される図。費用はドメイン維持費のみで、ルーティング上限にも届かないことを示す">
+        <text x="330" y="20" class="cap" text-anchor="middle">ローカル部は何でも、宛先はいつも1つ</text>
+        <text x="55" y="52" class="lbl mono">a@example.com</text>
+        <text x="55" y="76" class="lbl mono">zzzzz-999@example.com</text>
+        <text x="55" y="100" class="lbl mono">info@example.com</text>
+        <text x="55" y="124" class="lbl mono">x7@example.com</text>
+        <line x1="235" y1="48" x2="390" y2="86" stroke="var(--rule)" stroke-width="1.5" marker-end="url(#af1)"/>
+        <line x1="235" y1="72" x2="390" y2="86" stroke="var(--rule)" stroke-width="1.5" marker-end="url(#af1)"/>
+        <line x1="235" y1="96" x2="390" y2="86" stroke="var(--rule)" stroke-width="1.5" marker-end="url(#af1)"/>
+        <line x1="235" y1="120" x2="390" y2="86" stroke="var(--rule)" stroke-width="1.5" marker-end="url(#af1)"/>
+        <rect x="400" y="60" width="180" height="52" rx="6" fill="var(--surface)" stroke="var(--ink)" stroke-width="1.5"/>
+        <text x="490" y="92" class="cap mono" text-anchor="middle">ルール1本</text>
+        <text x="330" y="155" class="lbl" text-anchor="middle">費用: $10.44/年 → $11.15/年（2026-11-01〜、ドメイン代のみ）</text>
+        <text x="330" y="178" class="lbl" text-anchor="middle">上限: 200ルール/ドメイン・200宛先/アカウント（1ルールなので未到達）</text>
+        <defs>
+          <marker id="af1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><polygon points="0,0 10,5 0,10" fill="var(--rule)"/></marker>
+        </defs>
+      </svg>
+      <figcaption>設定は1本、費用は定額。上限にも届かない。</figcaption>
+    </figure>
+    <p>catch-all（accept-all）は、ローカル部が何であれ1つの宛先へ流すルールを1本張るだけで完結する。登録という工程が存在しないから、費用も件数に連動しない。ルーティングの上限はあるが、ルール1本のcatch-allには最初から届かない。</p>
+    <p class="note">ここまでは全部本当だが、話はここで終わらない。</p>
   </section>
 
   <!-- 2 -->
   <section>
     <h2>だが、それは一発で見抜かれる</h2>
-    <p>メールアドレスを大量に受け付けるフォームの多くは、裏でメール検証サービスを使っている。やることは単純で、<strong>ランダムに作った、存在するはずのないローカル部</strong>を宛先にして<code>RCPT TO</code>を送りつける。これを<strong>2〜10件</strong>試して、<strong>全部 250（受理）</strong>が返ってきたら、そのドメインは<strong>accept-all（catch-all）</strong>だと確定する。</p>
-    <p>ここで<code>DATA</code>（本文）は送らない。実際に配送してしまうと架空のアドレス宛にメールを届けることになるので、検証は<code>RCPT TO</code>への応答だけを見て<code>QUIT</code>する。——この「<code>DATA</code>を送らずに切る」という一点が、あとで効いてくる。</p>
-    <p>accept-allは「危険」には分類されない。<strong>「判定不能」（unknown / risky）</strong>という、もう一段控えめな扱いになる。理由は単純で、<strong>B2Bアドレスの40〜60%がcatch-all</strong>だという推計があり、ここを問答無用で弾くと正規の取引先まで大量に落としてしまうからだ。だから多くの運営は拒否せず、<strong>フラグだけ立てる</strong>。</p>
-    <p class="hl">つまり「無限のアドレス」は、無限であること自体が1ビットの情報を漏らす。</p>
+    <figure>
+      <svg viewBox="0 0 660 220" role="img" aria-label="検証プローブが存在しないランダムな宛先を複数回試し、すべて250が返るとcatch-allと確定してフラグが立つ図。DATAは送らずQUITする">
+        <text x="330" y="18" class="cap" text-anchor="middle">ランダムな宛先を2〜10件、RCPT TOだけで試す</text>
+        <rect x="20" y="40" width="120" height="40" rx="5" fill="var(--surface)" stroke="var(--ink)" stroke-width="1.5"/>
+        <text x="80" y="65" class="cap mono" text-anchor="middle">検証プローブ</text>
+
+        <line x1="140" y1="55" x2="330" y2="55" stroke="currentColor" stroke-width="1.5" marker-end="url(#af2)"/>
+        <text x="235" y="49" class="lbl mono" text-anchor="middle">RCPT TO: q7f@…</text>
+        <line x1="330" y1="55" x2="410" y2="55" stroke="var(--stamp)" stroke-width="1.5" marker-end="url(#af2s)"/>
+        <text x="420" y="59" class="lbl mono" style="fill:var(--stamp)">250</text>
+
+        <line x1="140" y1="90" x2="330" y2="90" stroke="currentColor" stroke-width="1.5" marker-end="url(#af2)"/>
+        <text x="235" y="84" class="lbl mono" text-anchor="middle">RCPT TO: k2x@…</text>
+        <line x1="330" y1="90" x2="410" y2="90" stroke="var(--stamp)" stroke-width="1.5" marker-end="url(#af2s)"/>
+        <text x="420" y="94" class="lbl mono" style="fill:var(--stamp)">250</text>
+
+        <line x1="140" y1="125" x2="330" y2="125" stroke="currentColor" stroke-width="1.5" marker-end="url(#af2)"/>
+        <text x="235" y="119" class="lbl mono" text-anchor="middle">RCPT TO: m9d@…</text>
+        <line x1="330" y1="125" x2="410" y2="125" stroke="var(--stamp)" stroke-width="1.5" marker-end="url(#af2s)"/>
+        <text x="420" y="129" class="lbl mono" style="fill:var(--stamp)">250</text>
+
+        <text x="80" y="150" class="lbl" text-anchor="middle">…2〜10件、全部250</text>
+
+        <rect x="470" y="95" width="150" height="46" rx="6" fill="var(--stamp-bg)" stroke="var(--stamp)" stroke-width="1.5"/>
+        <text x="545" y="123" class="cap" text-anchor="middle" style="fill:var(--stamp)">catch-all確定</text>
+
+        <text x="330" y="180" class="lbl" text-anchor="middle">DATAは送らずQUIT（実配送を避ける）</text>
+        <text x="330" y="202" class="lbl" text-anchor="middle">B2Bの40〜60%がcatch-all → 拒否せず「判定不能」フラグのみ</text>
+        <defs>
+          <marker id="af2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><polygon points="0,0 10,5 0,10" fill="currentColor"/></marker>
+          <marker id="af2s" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><polygon points="0,0 10,5 0,10" fill="var(--stamp)"/></marker>
+        </defs>
+      </svg>
+      <figcaption>ランダム打診が全部通れば、それ自体が印になる。</figcaption>
+    </figure>
+    <p>検証サービスは、存在しないランダムな宛先を数件試し、全部250が返ればcatch-allと確定する。実配送を避けるため、DATAは送らずQUITする。B2Bの4〜6割がcatch-allという推計があり、危険ではなく「判定不能」としてフラグが立つだけになる。</p>
+    <p class="hl">つまり無限のアドレスは、無限であること自体が1ビットの情報を漏らす。</p>
   </section>
 
   <!-- 3 -->
   <section>
     <h2>賢い回避策は、SMTPの時間順序に殺される</h2>
-    <p>フラグを立てられるだけで済むなら、フラグごと消したくなる。思いつく回避策はこうだ——catch-allの転送先を、ただの受信箱ではなく<strong>プログラム（サーバーレス関数）</strong>にする。許可リストに載っているアドレス宛だけ本来の宛先へ転送し、載っていないアドレスには<code>setReject()</code>を呼んで<strong>恒久的なSMTPエラー</strong>を返す。そうすれば「実在するアドレスだけ受理される」普通のドメインに見えるはずだ、と。</p>
     <figure>
-      <svg viewBox="0 0 660 460" role="img" aria-label="SMTPのやり取りを送信側・受信側・転送プログラムの3レーンで示す図。RCPT TOへの250応答までは検証プローブから見えるが、そこでプローブは切断し、本文DATAのあとにようやく起動する転送プログラムがsetReject()で返す550は、検証プローブから一度も観測されない">
+      <svg viewBox="0 0 660 520" role="img" aria-label="SMTPのやり取りを送信側・受信側・転送プログラムの3レーンで示す図。RCPT TOへの250応答までは検証プローブから見えるが、そこでプローブは切断し、本文DATAのあとにようやく起動する転送プログラムがsetReject()で返す550は、検証プローブから一度も観測されない。宛先ルール自体が無いアドレスは2022年の報告でRCPT時点で550が返り、本観測ではDATA後に421が返っている">
         <text x="90"  y="26" class="cap mono" text-anchor="middle">送信側</text>
         <text x="330" y="26" class="cap mono" text-anchor="middle">受信側（Email Routing）</text>
         <text x="590" y="26" class="cap mono" text-anchor="middle">転送プログラム</text>
@@ -213,6 +265,9 @@
 
         <text x="330" y="424" class="cap" text-anchor="middle">検証プローブは、この <tspan style="fill:var(--stamp);font-weight:700">550 を一度も見ない</tspan></text>
 
+        <text x="330" y="466" class="lbl" text-anchor="middle">二層構造: 「宛先ルールの有無」はRCPT時点で判定・「プログラムのロジック」はDATA後にしか動けない</text>
+        <text x="330" y="488" class="lbl" text-anchor="middle">本観測: この構成ではDATA後に421 4.3.0／宛先ルール無しは2022年報告でRCPT時点550</text>
+
         <defs>
           <marker id="ar1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
             <polygon points="0,0 10,5 0,10" fill="currentColor"/>
@@ -224,15 +279,13 @@
       </svg>
       <figcaption>「プローブが見える範囲」（点線の箱）と「550が返る位置」は、時間軸の上で重ならない。</figcaption>
     </figure>
-    <p>成立しない理由は、能力ではなく<strong>タイミング</strong>にある。転送プログラムが受け取れるのはメール本文そのものだ——公式のサンプルコードも<code>message.rawSize</code>（本文サイズ）を見てから<code>setReject()</code>を呼ぶ形になっている。つまり<strong><code>DATA</code>を受け切るまで、プログラムは起動すらできない</strong>。ところがSMTPの仕様では、<code>RCPT TO</code>への応答は<code>DATA</code>より前に返す。プログラムに聞く材料がまだ無い以上、この時点で返せる答えは<strong>「250」だけ</strong>だ。そして2章の検証はまさにその250を見た瞬間に<code>QUIT</code>する。<strong><code>setReject()</code>の550は、検証する側から原理的に一度も観測されない。</strong></p>
-    <p>実際にこの構成を動かして観測すると、<code>EHLO</code>/<code>MAIL FROM</code>/<code>RCPT TO</code>はすべて受理され、エラーが返るのは<code>DATA</code>のあとだった（本人の観測では<code>421 4.3.0 Upstream error</code>）。一方、<strong>宛先ルール自体が存在しないアドレス</strong>への配送を試すと、本文を送る前の<code>RCPT TO</code>の時点で<strong>550</strong>が返る、という2022年の報告もある。これは二層構造になっているということだ——「<strong>宛先ルールの有無</strong>」は本文が要らないので<code>RCPT TO</code>の時点で判定できる。「<strong>プログラムの中のロジック</strong>」は本文が要るので<code>DATA</code>のあとにしか動けない。<strong>同じ550番台のエラーでも、返ってくる場所がまったく違う。</strong></p>
-    <p class="note">これは回避のレシピではない。プロトコルの応答順序という、実装の巧拙とは無関係な制約が、設計そのものを決めているという話だ。</p>
+    <p>転送先をプログラムに変え、許可リスト外だけ<code>setReject()</code>で恒久エラーを返せば普通のドメインに見えないか——そんな回避策がある。だがプログラムが動けるのは本文を受け取った後で、<code>RCPT TO</code>への応答はその前に返る。だから返せる答えは250しかなく、検証はその250で早々に切断している。</p>
+    <p class="note">プロトコルの応答順序が、設計そのものを決めている。</p>
   </section>
 
   <!-- 4 -->
   <section>
     <h2>そもそも、そこを直しても何も変わらない</h2>
-    <p>百歩譲って3章の壁を越えられたとする。それでも防御側の見え方はほとんど動かない。自分で応募フォームを立て、自分で送信し、自分で検知器を書いて確かめた実測がこれだ。</p>
     <figure>
       <svg viewBox="0 0 660 250" role="img" aria-label="ドベネックの桶。network・browser・person・behaviorの4枚の板のうちpersonだけが50の高さで、他の3枚は1の高さしかなく、水位は一番低い板の高さで止まる">
         <text x="330" y="22" class="cap" text-anchor="middle">ドベネックの桶 —— 水位は、一番低い板で決まる</text>
@@ -242,22 +295,18 @@
         <line x1="40" y1="128" x2="620" y2="128" stroke="var(--safe)" stroke-width="1.5" stroke-dasharray="4 3"/>
         <text x="600" y="122" class="lbl" text-anchor="end" style="fill:var(--safe)">水位（＝最弱の板の高さ）</text>
 
-        <!-- person: tall board -->
         <rect x="90"  y="62" width="86" height="148" fill="var(--surface)" stroke="var(--ink)" stroke-width="1.5"/>
         <text x="133" y="232" class="cap" text-anchor="middle">person</text>
         <text x="133" y="80" class="mono big" text-anchor="middle">50</text>
 
-        <!-- network: short -->
         <rect x="228" y="126" width="86" height="84" fill="var(--surface)" stroke="var(--rule)" stroke-width="1.5"/>
         <text x="271" y="232" class="cap" text-anchor="middle">network</text>
         <text x="271" y="144" class="mono big" text-anchor="middle">1</text>
 
-        <!-- browser: short, emphasized as weakest -->
         <rect x="366" y="126" width="86" height="84" fill="var(--stamp-bg)" stroke="var(--stamp)" stroke-width="2"/>
         <text x="409" y="232" class="cap" text-anchor="middle" style="fill:var(--stamp);font-weight:700">browser</text>
         <text x="409" y="144" class="mono big" text-anchor="middle" style="fill:var(--stamp)">1</text>
 
-        <!-- behavior: short -->
         <rect x="504" y="126" width="86" height="84" fill="var(--surface)" stroke="var(--rule)" stroke-width="1.5"/>
         <text x="547" y="232" class="cap" text-anchor="middle">behavior</text>
         <text x="547" y="144" class="mono big" text-anchor="middle">1</text>
@@ -271,61 +320,152 @@
         <tr><td>一意なアドレスの架空名簿 50件</td><td class="n">50</td><td class="n">1（23軸すべて同点）</td></tr>
       </tbody>
     </table>
-    <p>プラスアドレスは正規化で全部同一人物に潰れて<strong>person層も1</strong>になる。一意なアドレス50件に切り替えると、たしかにperson層は<strong>50</strong>まで割れる——メールアドレスという軸に関しては、これは完全な勝利だ。だが同じ50件を<strong>ブラウザ指紋の23軸</strong>で見ると、値は<strong>1のまま、すべて同点</strong>だった。運営から見れば、依然として「同一の指紋を持つ何かが50件送ってきた」という1行の記録でしかない。<strong>メール軸を完璧に直しきっても、ブラウザ指紋は1のまま動かない。</strong></p>
+    <p>自分でフォームを立て、送信し、検知器を書いて確かめた。プラスアドレス14件は正規化で人物層もブラウザ層も1に潰れる。一意なアドレス50件は人物層こそ50まで割れるが、ブラウザ指紋23軸は全部同点で1のまま動かない。</p>
     <p class="hl">ここで話が一般原理に反転する。</p>
   </section>
 
   <!-- 5 -->
   <section>
     <h2>最小律 —— 対策は、一番弱いところにしか効かない</h2>
-    <p>農学に<strong>リービッヒの最小律</strong>（Liebig's law of the minimum）という古典がある。植物の成長は、一番不足している養分だけで決まる。窒素が枯れた畑にリンをいくら撒いても、収量は1グラムも動かない。上の図の桶——板の高さがバラバラの桶に溜まる水は、<strong>一番低い板の高さ</strong>で止まる。</p>
-    <p class="note">ただしこれは、検知器が<strong>AND型のハードルール</strong>（1軸でも基準を超えたら弾く）で判定している場合に限った近似だ。reCAPTCHA v3の<strong>0.0〜1.0の連続スコア</strong>やAkamai Bot Managerの<strong>0〜100点のBot Score</strong>のような<strong>スコア加算型</strong>では、弱いシグナルが足し合わされる——canvasが割れなくても、viewportが割れれば点は動く。桶で言えば、水位ではなく<strong>板の高さの合計</strong>に近い。それでも、多くの現場ではAND型の一次スクリーニング（accept-all判定やブロックリスト照合）が先に走ってからスコア型の二次審査に渡る構成が多く、最小律は最初の関門を見積もるための近似として生きている。</p>
-    <p>検知も同じ構造をしている。<strong>軸に優劣は無く、一番弱い軸だけが意味を持つ</strong>。そして厄介なのは、<strong>最弱の軸は動く</strong>ということだ。メール軸を直せば、次はブラウザ軸が最弱になる。</p>
-    <p>正直に書く。3章の回避策は、筆者自身が<strong>4往復かけて設計し</strong>、動くはずだと確信してから、ようやく無意味だと気づいたものだった。人は「200個まで」のような具体的な数字に出会うと、その<strong>制約を外すこと自体</strong>を目的にしてしまう。板の高さの分布を見ずに、目の前の1枚だけを高くしようとする。</p>
-    <div class="quest"><strong>検算1問</strong>: 「その制約を完全に外したら、全体の数字はいくつ動くか」。答えが<strong>「動かない」</strong>なら、それは最初から制約ではなかったということだ。</div>
-    <p>防御側にとっての含意はシンプルだ。検査を足すなら、<strong>一番安く測れて一番よく効く軸</strong>から入れる。メールアドレスの正規化（<code>+</code>以降の削除・ドットの削除）は3行で書けて効果が大きい。accept-all判定は<code>RCPT TO</code>を1回投げるだけで済む。<strong>指紋やタイミングの分析はその後</strong>でいい。</p>
+    <figure>
+      <svg viewBox="0 0 660 260" role="img" aria-label="AND型のハードルールでは水位が最弱の板で決まるが、スコア型では弱い信号も積み上げられて合計点になることを対比する図。reCAPTCHA v3は0.0から1.0、Akamai Bot Scoreは0から100の連続スコアを使う。多くの現場ではAND型の一次審査のあとにスコア型の二次審査が続く">
+        <text x="165" y="20" class="cap" text-anchor="middle">AND型（ハードルール）</text>
+        <rect x="70" y="40" width="190" height="120" fill="none" stroke="var(--rule)" stroke-dasharray="2 5"/>
+        <rect x="70" y="120" width="190" height="40" fill="var(--stamp-bg)" opacity="0.6"/>
+        <line x1="70" y1="120" x2="260" y2="120" stroke="var(--stamp)" stroke-dasharray="4 3"/>
+        <rect x="90" y="60" width="30" height="100" fill="var(--surface)" stroke="var(--ink)"/>
+        <rect x="140" y="118" width="30" height="42" fill="var(--surface)" stroke="var(--stamp)" stroke-width="2"/>
+        <rect x="190" y="122" width="30" height="38" fill="var(--surface)" stroke="var(--rule)"/>
+        <text x="165" y="182" class="lbl" text-anchor="middle" style="fill:var(--stamp)">水位=最弱の1枚で決まる</text>
+
+        <text x="495" y="20" class="cap" text-anchor="middle">スコア型（加算）</text>
+        <rect x="410" y="60" width="40" height="100" fill="var(--safe-bg)"/>
+        <rect x="410" y="120" width="40" height="40" fill="var(--safe)"/>
+        <rect x="470" y="80" width="40" height="80" fill="var(--safe-bg)"/>
+        <rect x="470" y="130" width="40" height="30" fill="var(--safe)"/>
+        <rect x="530" y="100" width="40" height="60" fill="var(--safe-bg)"/>
+        <rect x="530" y="140" width="40" height="20" fill="var(--safe)"/>
+        <text x="495" y="182" class="lbl" text-anchor="middle" style="fill:var(--safe)">弱い信号も足し合わさる</text>
+        <text x="495" y="204" class="lbl mono" text-anchor="middle">reCAPTCHA v3: 0.0〜1.0／Akamai: 0〜100</text>
+
+        <text x="330" y="236" class="lbl" text-anchor="middle">多くの現場はAND型の一次審査 → スコア型の二次審査</text>
+      </svg>
+      <figcaption>桶が使えるのはAND型のときだけ。検算1問——制約を完全に外して数字が動かないなら、それは制約ではない。</figcaption>
+    </figure>
+    <p>リービッヒの最小律——植物の成長は、一番不足した養分だけで決まる。検知も同じで、軸に優劣は無く一番弱い軸だけが利き、しかも最弱の軸は動く。筆者自身、3章の回避策を4往復かけて設計してから、ようやく無意味だと気づいた。防御側はまず、安く測れて一番よく効く軸——メールの正規化とaccept-all判定——から検査を足せばいい。</p>
   </section>
 
   <!-- 6 -->
   <section>
     <h2>ただし最小律は「1つの畑」の話 —— 相手が複数なら、実装コストが重みを変える</h2>
-    <p>5章までは、<strong>1つの検知器の中</strong>で何が起きるかの話だった。だが実際に相手にするのは検知器の集団で、<strong>運営ごとに実装している軸がまるで違う</strong>。ここで軸には独立した2つの性質があることが見えてくる。</p>
-    <ol>
-      <li><strong>①その軸で今どれだけ潰れているか</strong>（守る側から見た「攻める側の弱さ」）</li>
-      <li><strong>②運営がその軸を実装している確率</strong>（実装コストの裏返し）</li>
-    </ol>
-    <p>メールアドレスは<strong>目視で分かる</strong>。台帳を人が眺めるだけで「同じ人が10件出している」に気づけるし、サーバ側の正規化も3行で書ける。<strong>運営の技術力にほぼ依存せず、いつも見られている</strong>。ブラウザ指紋は逆だ。目視では絶対に気づけない。JSを仕込み、収集基盤を持ち、分布を分析して初めて見える軸で、自前で作るなら<strong>技術力の高い運営しか見ていない</strong>。</p>
-    <p class="note">ただし②を決めているのは自前実装の技術力だけではない。<strong>reCAPTCHAは全ウェブの約9.8%、CAPTCHAカテゴリに限れば72%のサイトに導入されている</strong>という集計がある。プラグイン1枚を貼るだけで、ブラウザ指紋・行動・IPレピュテーションを束にして手に入る——<strong>実装コストはほぼゼロ</strong>だ。つまり現実の②を決めているのは技術力ではなく、<strong>既製の検知サービスを1枚貼ったかどうか</strong>である。</p>
-    <p>だから投資の期待値は<strong>①×②</strong>で決まる。「一番潰れている軸」が「誰も見ていない軸」なら、そこを直しても期待値はゼロのまま動かない。4章で見た「ブラウザ指紋が1のまま」という事実は、<strong>その軸を実際に見ている運営に対してだけ</strong>効く話だった。</p>
-    <p>それでも——<strong>独自ドメイン1本に頼る構成は、最悪の選択のままだ</strong>。理由は3つ重なる。①ローカル部がどれだけバラバラでも<code>@</code>より右は全件同じ文字列だから、<code>GROUP BY</code>一発・Excelの並べ替え一発で1に潰れる。②無料の転送を使うとMXレコードがCloudflareの共有ゾーンに入り、それ自体が指紋になる。③ドメインの登録そのものが<strong>不可逆</strong>——WHOISに刻まれる登録日は消せず、<strong>ドメイン年齢</strong>は詐欺検知の定番シグナルとして使われる。作った瞬間から「今日できたドメイン」という消せない印を背負うことになる。メール軸は「投資して強くする」対象ではなく、<strong>「退行させない」</strong>対象として扱うのが正解になる。</p>
-    <p>「じゃあ持ち球を10ドメインに散らせばいい」も同じ罠の別バージョンだ。<strong>未知のドメイン10個に応募が均等に割り振られるような分布は、実在する人間の集団からは出てこない</strong>——ふつうの応募者はドメインを1つしか持たないので、10ドメインへの計画的な分散はそれ自体が異常な塊になる。1ドメインへの集中が10ドメインへの分散に変わるだけで、<strong>1本が最悪なのであって10本が良いわけではない</strong>。メール軸は、集中していても分散していても<strong>両側から挟まれている</strong>。</p>
-    <p>検知する側への含意はもう一段先まで言える。<strong>②は受け身で測れる</strong>——対象フォームのHTMLとレスポンスヘッダを取得して<code>recaptcha</code>・<code>turnstile</code>・<code>hcaptcha</code>・<code>challenges.cloudflare</code>をgrepするだけでいい。1円もかからず、相手に何かを送りつけもしない読み取り専用の調査だ。一方「メールの正規化を実装しているか」は、実際に2通送って確かめるしかない<strong>能動的なプローブ</strong>になる。<strong>タダで測れる側の②を測らずに、勘で投資順序を決めてはいけない。</strong>メールの正規化と<code>accept-all</code>判定は、<strong>3行と1回のSMTP往復</strong>で入る、費用対効果がもっとも高い検査になる。</p>
-    <table class="matrix">
-      <caption>4つの構成 × どこで捕まるか</caption>
-      <thead><tr><th>構成</th><th>見かけの人数</th><th>どこで捕まるか</th></tr></thead>
-      <tbody>
-        <tr><td>プラスアドレス</td><td class="n">1</td><td>受信側の正規化（<code>+</code>以降を削除）3行で書ける</td></tr>
-        <tr><td>独自ドメイン1本 + catch-all</td><td class="n">1</td><td><code>GROUP BY</code>1行。正規化ルールすら要らない</td></tr>
-        <tr><td>独自ドメイン + 許可リストのプログラム</td><td class="n">見かけ多数</td><td><code>RCPT TO</code>の時点では250しか返せない（3章）</td></tr>
-        <tr><td>使い捨てメール</td><td class="n">見かけ多数</td><td>ブロックリスト照合 ＋ MXレコードの共有（別記事）</td></tr>
-      </tbody>
-    </table>
-    <p class="note">使い捨てメールの検知の中身は、姉妹記事「<a href="https://mushataku.github.io/disposable-email-explained/">捨てメールの見分けかた</a>」にまとめてある。</p>
+    <figure>
+      <svg viewBox="0 0 680 260" role="img" aria-label="4つの構成それぞれで見かけの人数と、束ねるのに必要な作業を示す図。プラスアドレスと独自ドメインcatch-allは見かけ1で簡単に束ねられ、独自ドメインの許可リスト関数はRCPT時点で250しか返せないため見かけ多数のまま残り、使い捨てメールはブロックリストとMX共有で捕まえる">
+        <text x="340" y="20" class="cap" text-anchor="middle">4つの構成 × どこで捕まるか</text>
+
+        <rect x="20" y="40" width="150" height="50" rx="6" fill="var(--surface)" stroke="var(--rule)" stroke-width="1.5"/>
+        <text x="95" y="70" class="cap" text-anchor="middle">プラスアドレス</text>
+        <line x1="95" y1="90" x2="95" y2="130" stroke="currentColor" stroke-width="1.5" marker-end="url(#af3)"/>
+        <text x="95" y="150" class="lbl" text-anchor="middle">見かけ 1</text>
+        <text x="95" y="172" class="lbl" text-anchor="middle">正規化3行</text>
+
+        <rect x="190" y="40" width="150" height="50" rx="6" fill="var(--surface)" stroke="var(--rule)" stroke-width="1.5"/>
+        <text x="265" y="63" class="cap" text-anchor="middle">独自ドメイン</text>
+        <text x="265" y="80" class="cap" text-anchor="middle">+catch-all</text>
+        <line x1="265" y1="90" x2="265" y2="130" stroke="currentColor" stroke-width="1.5" marker-end="url(#af3)"/>
+        <text x="265" y="150" class="lbl" text-anchor="middle">見かけ 1</text>
+        <text x="265" y="172" class="lbl" text-anchor="middle">GROUP BY 1行</text>
+
+        <rect x="360" y="40" width="150" height="50" rx="6" fill="var(--stamp-bg)" stroke="var(--stamp)" stroke-width="1.5"/>
+        <text x="435" y="63" class="cap" text-anchor="middle" style="fill:var(--stamp)">独自ドメイン+</text>
+        <text x="435" y="80" class="cap" text-anchor="middle" style="fill:var(--stamp)">許可リスト関数</text>
+        <line x1="435" y1="90" x2="435" y2="130" stroke="var(--stamp)" stroke-width="1.5" marker-end="url(#af3s)"/>
+        <text x="435" y="150" class="lbl" text-anchor="middle">見かけ 多数</text>
+        <text x="435" y="172" class="lbl" text-anchor="middle" style="fill:var(--stamp)">RCPT時点は250止まり(3章)</text>
+
+        <rect x="530" y="40" width="150" height="50" rx="6" fill="var(--surface)" stroke="var(--rule)" stroke-width="1.5"/>
+        <text x="605" y="70" class="cap" text-anchor="middle">使い捨てメール</text>
+        <line x1="605" y1="90" x2="605" y2="130" stroke="currentColor" stroke-width="1.5" marker-end="url(#af3)"/>
+        <text x="605" y="150" class="lbl" text-anchor="middle">見かけ 多数</text>
+        <text x="605" y="172" class="lbl" text-anchor="middle">ブロックリスト+</text>
+        <text x="605" y="188" class="lbl" text-anchor="middle">MX共有</text>
+
+        <defs>
+          <marker id="af3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><polygon points="0,0 10,5 0,10" fill="currentColor"/></marker>
+          <marker id="af3s" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><polygon points="0,0 10,5 0,10" fill="var(--stamp)"/></marker>
+        </defs>
+      </svg>
+      <figcaption>束ねるのに要る作業は、軸ごとにまるで違う。使い捨てメールの中身は<a href="https://mushataku.github.io/disposable-email-explained/">姉妹記事</a>へ。</figcaption>
+    </figure>
+    <p>運営ごとに実装している軸は違う——軸には「①今どれだけ潰れているか」と「②運営がその軸を実装している確率」という2つの性質がある。投資の期待値はこの①×②の面積で決まり、誰も見ていない軸を直しても動かない。</p>
+    <figure>
+      <svg viewBox="0 0 660 320" role="img" aria-label="横軸を割れ具合d、縦軸を見られている確率pとした散布図。メールは対策前はdが高くpも高いため急速に潰れ、対策後はdが1のまま安定する。ブラウザ指紋はdが常に1のままで、pは既製の検知サービスを導入しているかどうかで決まる">
+        <line x1="70" y1="270" x2="620" y2="270" stroke="var(--ink)" stroke-width="1.5" marker-end="url(#afE)"/>
+        <line x1="70" y1="270" x2="70" y2="30" stroke="var(--ink)" stroke-width="1.5" marker-end="url(#afE)"/>
+        <text x="620" y="290" class="lbl" text-anchor="end">d：割れ具合（低→高）</text>
+        <text x="40" y="22" class="lbl" text-anchor="start">p：見られている確率（低→高）</text>
+
+        <circle cx="520" cy="90" r="7" fill="var(--stamp)"/>
+        <text x="520" y="76" class="lbl" text-anchor="middle">メール（未対策）</text>
+
+        <circle cx="120" cy="90" r="7" fill="var(--safe)"/>
+        <text x="120" y="76" class="lbl" text-anchor="middle">メール（対策後）</text>
+
+        <line x1="500" y1="95" x2="150" y2="95" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="3 4" marker-end="url(#afE2)"/>
+        <text x="330" y="112" class="lbl" text-anchor="middle">正規化3行・RCPT1発で dが1へ落ちる</text>
+
+        <circle cx="150" cy="160" r="7" fill="var(--ink)"/>
+        <text x="150" y="146" class="lbl" text-anchor="middle">ブラウザ指紋（既製ツール導入）</text>
+        <text x="150" y="178" class="lbl mono" text-anchor="middle">reCAPTCHA等 全ウェブ9.8%・CAPTCHA内72%</text>
+
+        <circle cx="150" cy="230" r="7" fill="var(--muted)"/>
+        <text x="150" y="216" class="lbl" text-anchor="middle">ブラウザ指紋（自前実装）</text>
+        <text x="150" y="248" class="lbl" text-anchor="middle">JS計装・分析基盤が要る → pは技術力次第</text>
+
+        <text x="330" y="300" class="cap" text-anchor="middle">投資の期待値は d × p の面積</text>
+        <defs>
+          <marker id="afE" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><polygon points="0,0 10,5 0,10" fill="var(--ink)"/></marker>
+          <marker id="afE2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><polygon points="0,0 10,5 0,10" fill="var(--muted)"/></marker>
+        </defs>
+      </svg>
+      <figcaption>誰も見ていない軸（p低）を直しても、期待値は動かない。</figcaption>
+    </figure>
+    <p>それでも独自ドメイン1本は最悪のままだ——GROUP BY一発で1に潰れ、MXは共有ゾーンに指紋を残し、ドメイン年齢という不可逆な印まで背負う。10ドメインに散らしても、不自然な均等分布という別の異常が生まれるだけで、1本が最悪なのであって10本が正解にはならない。</p>
+    <figure>
+      <svg viewBox="0 0 660 200" role="img" aria-label="運営がその軸を実装しているか(p)をどう測るかを3つに分類する図。受動で測れるものはフォームのHTMLを読むだけで無料、能動が要るものは実際にテストメールを送るしかなく、測れないものは相手のログの中にある">
+        <rect x="20" y="40" width="190" height="110" rx="6" fill="var(--safe-bg)" stroke="var(--safe)" stroke-width="1.5"/>
+        <text x="115" y="66" class="cap" text-anchor="middle" style="fill:var(--safe)">受動で測れる</text>
+        <text x="115" y="90" class="lbl mono" text-anchor="middle">grep: recaptcha/turnstile/</text>
+        <text x="115" y="106" class="lbl mono" text-anchor="middle">hcaptcha/challenges.cloudflare</text>
+        <text x="115" y="128" class="lbl" text-anchor="middle">無料・読むだけ</text>
+
+        <rect x="235" y="40" width="190" height="110" rx="6" fill="var(--neutral-bg)" stroke="var(--rule)" stroke-width="1.5"/>
+        <text x="330" y="66" class="cap" text-anchor="middle">能動が要る</text>
+        <text x="330" y="92" class="lbl" text-anchor="middle">正規化の有無は</text>
+        <text x="330" y="112" class="lbl" text-anchor="middle">実際に2通送るしかない</text>
+
+        <rect x="450" y="40" width="190" height="110" rx="6" fill="var(--stamp-bg)" stroke="var(--stamp)" stroke-width="1.5"/>
+        <text x="545" y="66" class="cap" text-anchor="middle" style="fill:var(--stamp)">測れない</text>
+        <text x="545" y="92" class="lbl" text-anchor="middle">指紋が実際に</text>
+        <text x="545" y="112" class="lbl" text-anchor="middle">フラグを立てたかは</text>
+        <text x="545" y="132" class="lbl" text-anchor="middle">相手のログの中</text>
+      </svg>
+      <figcaption>タダで測れる②から先に測る。メールの正規化とaccept-all判定が、いちばん費用対効果の高い検査になる。</figcaption>
+    </figure>
   </section>
 
   <footer>
     <div class="refs">
       <strong style="color:var(--ink)">参考</strong>
-      <a href="https://developers.cloudflare.com/email-service/platform/limits/">Cloudflare Email Service — Limits（ルーティングルール・検証済み宛先の上限）</a>
-      <a href="https://developers.cloudflare.com/email-routing/email-workers/runtime-api/">Cloudflare Email Routing — Runtime API（<code>setReject()</code> / <code>rawSize</code>）</a>
-      <a href="https://hunter.io/blog/ultimate-guide-accept-all-catch-all">The Ultimate Guide to Accept-all (Catch-all) Email Addresses — Hunter</a>
-      <a href="https://en.wikipedia.org/wiki/Liebig%27s_law_of_the_minimum">Liebig's law of the minimum — Wikipedia</a>
-      <a href="https://developers.google.com/recaptcha/docs/v3">reCAPTCHA v3 — Google for Developers（0.0〜1.0スコア）</a>
-      <a href="https://techdocs.akamai.com/edgeworkers/docs/botscore-object">BotScore Object — Akamai TechDocs（0〜100点）</a>
-      <a href="https://www.wmtips.com/technologies/captchas/recaptcha/">reCAPTCHA Market Share — WMTips（全ウェブ9.8%／CAPTCHAカテゴリ72%）</a>
+      <a href="https://developers.cloudflare.com/email-service/platform/limits/" title="ルーティングルール・検証済み宛先の上限">Cloudflare Email — Limits</a>
+      <a href="https://developers.cloudflare.com/email-routing/email-workers/runtime-api/" title="setReject() / rawSize の仕様">Cloudflare Email — Runtime API</a>
+      <a href="https://hunter.io/blog/ultimate-guide-accept-all-catch-all" title="Accept-all（Catch-all）の解説">Hunter — Accept-all Guide</a>
+      <a href="https://en.wikipedia.org/wiki/Liebig%27s_law_of_the_minimum" title="リービッヒの最小律">Wikipedia — Liebig's law</a>
+      <a href="https://developers.google.com/recaptcha/docs/v3" title="0.0〜1.0スコア">reCAPTCHA v3</a>
+      <a href="https://techdocs.akamai.com/edgeworkers/docs/botscore-object" title="0〜100点">Akamai BotScore</a>
+      <a href="https://www.wmtips.com/technologies/captchas/recaptcha/" title="全ウェブ9.8%／CAPTCHAカテゴリ72%">WMTips — reCAPTCHA Share</a>
     </div>
     <div>
-      価格・上限・SMTPの観測は2026年9月8日に確認した値。自作実験（14件/50件・23軸）は筆者が独自に構築した検証環境での実測。この記事は<strong>検知する側</strong>の視点で書いており、特定サービスへの回避手順は含まない。MIT License。
+      価格・上限・SMTPの観測は2026-09-08時点。実験は自前検証環境の実測。検知する側の視点で書き、回避手順は含まない。MIT License。
     </div>
   </footer>
 
