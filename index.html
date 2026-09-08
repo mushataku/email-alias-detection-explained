@@ -279,6 +279,7 @@
   <section>
     <h2>最小律 —— 対策は、一番弱いところにしか効かない</h2>
     <p>農学に<strong>リービッヒの最小律</strong>（Liebig's law of the minimum）という古典がある。植物の成長は、一番不足している養分だけで決まる。窒素が枯れた畑にリンをいくら撒いても、収量は1グラムも動かない。上の図の桶——板の高さがバラバラの桶に溜まる水は、<strong>一番低い板の高さ</strong>で止まる。</p>
+    <p class="note">ただしこれは、検知器が<strong>AND型のハードルール</strong>（1軸でも基準を超えたら弾く）で判定している場合に限った近似だ。reCAPTCHA v3の<strong>0.0〜1.0の連続スコア</strong>やAkamai Bot Managerの<strong>0〜100点のBot Score</strong>のような<strong>スコア加算型</strong>では、弱いシグナルが足し合わされる——canvasが割れなくても、viewportが割れれば点は動く。桶で言えば、水位ではなく<strong>板の高さの合計</strong>に近い。それでも、多くの現場ではAND型の一次スクリーニング（accept-all判定やブロックリスト照合）が先に走ってからスコア型の二次審査に渡る構成が多く、最小律は最初の関門を見積もるための近似として生きている。</p>
     <p>検知も同じ構造をしている。<strong>軸に優劣は無く、一番弱い軸だけが意味を持つ</strong>。そして厄介なのは、<strong>最弱の軸は動く</strong>ということだ。メール軸を直せば、次はブラウザ軸が最弱になる。</p>
     <p>正直に書く。3章の回避策は、筆者自身が<strong>4往復かけて設計し</strong>、動くはずだと確信してから、ようやく無意味だと気づいたものだった。人は「200個まで」のような具体的な数字に出会うと、その<strong>制約を外すこと自体</strong>を目的にしてしまう。板の高さの分布を見ずに、目の前の1枚だけを高くしようとする。</p>
     <div class="quest"><strong>検算1問</strong>: 「その制約を完全に外したら、全体の数字はいくつ動くか」。答えが<strong>「動かない」</strong>なら、それは最初から制約ではなかったということだ。</div>
@@ -293,12 +294,12 @@
       <li><strong>①その軸で今どれだけ潰れているか</strong>（守る側から見た「攻める側の弱さ」）</li>
       <li><strong>②運営がその軸を実装している確率</strong>（実装コストの裏返し）</li>
     </ol>
-    <p>メールアドレスは<strong>目視で分かる</strong>。台帳を人が眺めるだけで「同じ人が10件出している」に気づけるし、サーバ側の正規化も3行で書ける。<strong>運営の技術力にほぼ依存せず、いつも見られている</strong>。ブラウザ指紋は逆だ。目視では絶対に気づけない。JSを仕込み、収集基盤を持ち、分布を分析して初めて見える軸で、<strong>技術力の高い運営しか見ていない</strong>。</p>
+    <p>メールアドレスは<strong>目視で分かる</strong>。台帳を人が眺めるだけで「同じ人が10件出している」に気づけるし、サーバ側の正規化も3行で書ける。<strong>運営の技術力にほぼ依存せず、いつも見られている</strong>。ブラウザ指紋は逆だ。目視では絶対に気づけない。JSを仕込み、収集基盤を持ち、分布を分析して初めて見える軸で、自前で作るなら<strong>技術力の高い運営しか見ていない</strong>。</p>
+    <p class="note">ただし②を決めているのは自前実装の技術力だけではない。<strong>reCAPTCHAは全ウェブの約9.8%、CAPTCHAカテゴリに限れば72%のサイトに導入されている</strong>という集計がある。プラグイン1枚を貼るだけで、ブラウザ指紋・行動・IPレピュテーションを束にして手に入る——<strong>実装コストはほぼゼロ</strong>だ。つまり現実の②を決めているのは技術力ではなく、<strong>既製の検知サービスを1枚貼ったかどうか</strong>である。</p>
     <p>だから投資の期待値は<strong>①×②</strong>で決まる。「一番潰れている軸」が「誰も見ていない軸」なら、そこを直しても期待値はゼロのまま動かない。4章で見た「ブラウザ指紋が1のまま」という事実は、<strong>その軸を実際に見ている運営に対してだけ</strong>効く話だった。</p>
-    <p>この式で見ると、<code>+N</code>エイリアスから独自ドメイン1本へ「改善」したつもりの一手が、実は逆方向に動いていたことが分かる。<code>+N</code>が束ねられるのは<strong>正規化を実装した運営</strong>だけだ——<code>+</code>以降を削除する3行を書いていなければ、見た目には別人のアドレスが並んでいるだけで気づかれない。ところが独自ドメイン1本＋catch-allは、<strong>応募者一覧をただソートしただけの運営</strong>にも見つかる。ローカル部がどれだけバラバラでも<code>@</code>より右は全件同じ文字列だから、<code>GROUP BY</code>どころかExcelで並べ替えれば目に入る。<strong>束ねるのに要る実装コストがゼロになった</strong>、つまり②が振り切れる方向へ自分から動いてしまったということだ。</p>
-    <p>それでも——<strong>独自ドメイン1本に頼る構成は、最悪の選択のままだ</strong>。メールアドレスは、運営の技術力にかかわらずほぼ確実に見られていて、独自ドメイン1本は<strong>自分から1に潰れにいく</strong>ことになる。メール軸は「投資して強くする」対象ではなく、<strong>「退行させない」</strong>対象として扱うのが正解になる。</p>
+    <p>それでも——<strong>独自ドメイン1本に頼る構成は、最悪の選択のままだ</strong>。理由は3つ重なる。①ローカル部がどれだけバラバラでも<code>@</code>より右は全件同じ文字列だから、<code>GROUP BY</code>一発・Excelの並べ替え一発で1に潰れる。②無料の転送を使うとMXレコードがCloudflareの共有ゾーンに入り、それ自体が指紋になる。③ドメインの登録そのものが<strong>不可逆</strong>——WHOISに刻まれる登録日は消せず、<strong>ドメイン年齢</strong>は詐欺検知の定番シグナルとして使われる。作った瞬間から「今日できたドメイン」という消せない印を背負うことになる。メール軸は「投資して強くする」対象ではなく、<strong>「退行させない」</strong>対象として扱うのが正解になる。</p>
     <p>「じゃあ持ち球を10ドメインに散らせばいい」も同じ罠の別バージョンだ。<strong>未知のドメイン10個に応募が均等に割り振られるような分布は、実在する人間の集団からは出てこない</strong>——ふつうの応募者はドメインを1つしか持たないので、10ドメインへの計画的な分散はそれ自体が異常な塊になる。1ドメインへの集中が10ドメインへの分散に変わるだけで、<strong>1本が最悪なのであって10本が良いわけではない</strong>。メール軸は、集中していても分散していても<strong>両側から挟まれている</strong>。</p>
-    <p>検知する側への含意もこの式のままだ。検査を足す順序は、<strong>実装が安く・相手が直しにくい軸</strong>から。メールの正規化と<code>accept-all</code>判定は、<strong>3行と1回のSMTP往復</strong>で入る、費用対効果がもっとも高い検査になる。</p>
+    <p>検知する側への含意はもう一段先まで言える。<strong>②は受け身で測れる</strong>——対象フォームのHTMLとレスポンスヘッダを取得して<code>recaptcha</code>・<code>turnstile</code>・<code>hcaptcha</code>・<code>challenges.cloudflare</code>をgrepするだけでいい。1円もかからず、相手に何かを送りつけもしない読み取り専用の調査だ。一方「メールの正規化を実装しているか」は、実際に2通送って確かめるしかない<strong>能動的なプローブ</strong>になる。<strong>タダで測れる側の②を測らずに、勘で投資順序を決めてはいけない。</strong>メールの正規化と<code>accept-all</code>判定は、<strong>3行と1回のSMTP往復</strong>で入る、費用対効果がもっとも高い検査になる。</p>
     <table class="matrix">
       <caption>4つの構成 × どこで捕まるか</caption>
       <thead><tr><th>構成</th><th>見かけの人数</th><th>どこで捕まるか</th></tr></thead>
@@ -319,6 +320,9 @@
       <a href="https://developers.cloudflare.com/email-routing/email-workers/runtime-api/">Cloudflare Email Routing — Runtime API（<code>setReject()</code> / <code>rawSize</code>）</a>
       <a href="https://hunter.io/blog/ultimate-guide-accept-all-catch-all">The Ultimate Guide to Accept-all (Catch-all) Email Addresses — Hunter</a>
       <a href="https://en.wikipedia.org/wiki/Liebig%27s_law_of_the_minimum">Liebig's law of the minimum — Wikipedia</a>
+      <a href="https://developers.google.com/recaptcha/docs/v3">reCAPTCHA v3 — Google for Developers（0.0〜1.0スコア）</a>
+      <a href="https://techdocs.akamai.com/edgeworkers/docs/botscore-object">BotScore Object — Akamai TechDocs（0〜100点）</a>
+      <a href="https://www.wmtips.com/technologies/captchas/recaptcha/">reCAPTCHA Market Share — WMTips（全ウェブ9.8%／CAPTCHAカテゴリ72%）</a>
     </div>
     <div>
       価格・上限・SMTPの観測は2026年9月8日に確認した値。自作実験（14件/50件・23軸）は筆者が独自に構築した検証環境での実測。この記事は<strong>検知する側</strong>の視点で書いており、特定サービスへの回避手順は含まない。MIT License。
